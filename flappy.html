@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <title>Google Classroom</title>
+    <link rel="icon" href="https://ssl.gstatic.com/classroom/ic_product_classroom_32.png">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            border: 1px solid black;
+            touch-action: none;
+        }
+
+        #toggleScreen {
+            position: absolute;
+            bottom: 0;
+            right: 23px;
+            float: right;
+            font-size: 1.5em;
+        }
+
+        #playButton {
+            position: absolute;
+            left: 45vw;
+            top: 45vh;
+            font-size: 1.3em;
+        }
+        #buttons button{
+            font-size: 1.2em;
+            position: absolute;
+            left: 50vw;
+            bottom: 5px;
+        }
+        footer {
+            position: absolute;
+            bottom: 0;
+            font-size: 1.4em;
+            background: black;
+            color: white;
+            left: 0;
+            padding: 2px 12px;
+            border-top-right-radius: 15px;
+            width: 275px;
+        }
+
+        #name {
+            color: #7ba4ff;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="playButton" onclick="playGame(this);">Play! Use space bar.</button>
+    <canvas id="canvas">Update your browser to latest version to play this game.</canvas>
+    <div id="buttons">
+        <button onclick="location.reload();">Play Again</button>
+    </div>
+    <script>
+        // Set up the canvas and context
+        const html = document.getElementsByTagName('html')[0];
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width = window.innerWidth - 5;
+        const height = canvas.height = window.innerHeight - 70;
+
+        // Set up the game variables
+        let previousTimeStamp = 0;
+        let highScore = score = 0;
+        let isGameOver = false;
+        // Set up the bird
+        const bird = {
+            x: width / 4,
+            y: height / 2,
+            radius: 20,
+            velocity: 0,
+            gravity: 0.5,
+            jump: -10
+        };
+
+        // Set up the pipes
+        const pipeGap = 200;
+        const pipeWidth = 50;
+        let pipes = [
+            { x: width, y: 0, height: Math.random() * (height / 2) + 50 },
+            { x: width + width / 2, y: 0, height: Math.random() * (height / 2) + 50 }
+        ];
+        // Handle touch input
+        canvas.ontouchstart = () => { bird.velocity = bird.jump; }
+        // Handle keyboard input
+        document.addEventListener('keydown', function (event) {
+            if (event.code === 'Space') {
+                bird.velocity = bird.jump;
+            }
+        });
+        // Getting previously sotred high score
+        window.onload = () => {
+            highScore = localStorage.getItem('highScore') ? localStorage.getItem('highScore') : 0;
+        }
+        // Update the game state
+        function update() {
+            if (isGameOver) {
+                return;
+            }
+
+            // Move the bird
+            bird.velocity += bird.gravity;
+            bird.y += bird.velocity;
+            // Move the pipes
+            for (let i = 0; i < pipes.length; i++) {
+                pipes[i].x -= 5;
+                // Check for collision with bird
+                if (
+                    bird.x + bird.radius > pipes[i].x &&
+                    bird.x - bird.radius < pipes[i].x + pipeWidth &&
+                    (bird.y - bird.radius < pipes[i].height ||
+                        bird.y + bird.radius > pipes[i].height + pipeGap) ||
+                    (bird.y - bird.radius < 0) ||
+                    (bird.y + bird.radius > height)
+                ) {
+                    if ((score > highScore) || !localStorage.getItem('highScore')) {
+                        localStorage.setItem('highScore', score);
+                    }
+                    isGameOver = true;
+                    return;
+                }
+
+                // Remove pipes that have gone off screen
+                if (pipes[i].x + pipeWidth < 0) {
+                    pipes.splice(i, 1);
+                    score++;
+                    i--;
+                }
+            }
+
+            // Add new pipes
+            if ((screen.orientation.type).includes('landscape') &&
+                (pipes[pipes.length - 1].x < width - width / 3)
+            ) {
+                pipes.push({
+                    x: width,
+                    y: 0,
+                    height: Math.random() * (height / 2) + 50
+                });
+            } else if ((screen.orientation.type).includes('portrait') &&
+                (pipes[pipes.length - 1].x < width/3.5)
+            ) {
+                pipes.push({
+                    x: width,
+                    y: 0,
+                    height: Math.random() * (height / 2) + 50
+                });
+            }
+        }
+
+        // Draw the game objects
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw the bird
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#7ba4ff';
+            ctx.fill();
+
+            // Draw the pipes
+            for (let i = 0; i < pipes.length; i++) {
+                ctx.fillStyle = 'green';
+                ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].height);
+                ctx.fillRect(pipes[i].x, pipes[i].height + pipeGap, pipeWidth, height - pipes[i].height);
+            }
+
+            // Draw the score
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+            ctx.fillText(`High Score: ${highScore}`, 10, 60);
+
+            // Draw the game over message
+            if (isGameOver) {
+                ctx.fillStyle = 'red';
+                ctx.font = '48px Arial';
+                ctx.fillText('Game Over!', width / 2 - 150, height / 2);
+                if (score > highScore) { ctx.fillText(`You got a new high score of  ${score}`, width / 2 - 300, height / 2 + 50); }
+            }
+        }
+
+        // Run the game loop
+        function gameLoop(timeStamp) {
+            const elapsed = timeStamp - previousTimeStamp;
+            previousTimeStamp = timeStamp;
+            update();
+            draw();
+            if(!isGameOver && elapsed > 10){
+                window.requestAnimationFrame(gameLoop)
+            }
+        }       
+
+        function playGame(toBeRemove){
+            (toBeRemove.parentElement).removeChild(toBeRemove);
+            window.requestAnimationFrame(gameLoop);
+        }
+
+    </script>
+</body>
+
+</html>

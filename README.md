@@ -3,7 +3,8 @@ HTML version of the popular Flappy Bird game, adapted for web-browsers. No confi
 This is a remix of Ali Amir's original Flappy Bird version. Go check the repo. out: https://github.com/Ali-Amir-code/Flappy-Bird-Game
 
 # ❕Information❕
-Basically, you only need to download the files, then open the HTML file on a browser and enjoy!
+Basically, you only need to download the files, then open the HTML file on a browser and enjoy! This works on blocked Chromebooks and managed networks. 
+Plus, the page title is called "Google Classroom" with the actual Classroom's icon, so no worries.
 
 # ❗DISCLAIMER❗
 1. This was tested on Google Chromebook (OS Version: 84.0.4147.136) ✔️
